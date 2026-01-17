@@ -16,8 +16,10 @@
  */
 package xyz.jpenilla.runtask.pluginsapi
 
+import org.gradle.api.provider.MapProperty
 import org.gradle.api.provider.Property
 import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
 import xyz.jpenilla.runtask.util.HashingAlgorithm
 import xyz.jpenilla.runtask.util.calculateHash
 import xyz.jpenilla.runtask.util.toHexString
@@ -114,8 +116,16 @@ public abstract class GitHubApiDownload : PluginApiDownload() {
   @get:Input
   public abstract val assetName: Property<String>
 
+  @get:Input
+  @get:Optional
+  public abstract val username: Property<String>
+
+  @get:Input
+  @get:Optional
+  public abstract val password: Property<String>
+
   override fun toString(): String {
-    return "GitHubApiDownload{owner=${owner.get()}, repo=${repo.get()}, tag=${tag.get()}, assetName=${assetName.get()}}"
+    return "GitHubApiDownload{owner=${owner.get()}, repo=${repo.get()}, tag=${tag.get()}, assetName=${assetName.get()}, username=${username.orNull}}"
   }
 
   override fun equals(other: Any?): Boolean {
@@ -131,7 +141,9 @@ public abstract class GitHubApiDownload : PluginApiDownload() {
     return owner.get() == other.owner.get() &&
       repo.get() == other.repo.get() &&
       tag.get() == other.tag.get() &&
-      assetName.get() == other.assetName.get()
+      assetName.get() == other.assetName.get() &&
+      username.orNull == other.username.orNull &&
+      password.orNull == other.password.orNull
   }
 
   override fun hashCode(): Int {
@@ -139,6 +151,8 @@ public abstract class GitHubApiDownload : PluginApiDownload() {
     result = 31 * result + repo.get().hashCode()
     result = 31 * result + tag.get().hashCode()
     result = 31 * result + assetName.get().hashCode()
+    result = 31 * result + (username.orNull?.hashCode() ?: 0)
+    result = 31 * result + (password.orNull?.hashCode() ?: 0)
     return result
   }
 }
@@ -148,8 +162,20 @@ public abstract class UrlDownload : PluginApiDownload() {
   @get:Input
   public abstract val url: Property<String>
 
+  @get:Input
+  @get:Optional
+  public abstract val username: Property<String>
+
+  @get:Input
+  @get:Optional
+  public abstract val password: Property<String>
+
+  @get:Input
+  @get:Optional
+  public abstract val headers: MapProperty<String, String>
+
   override fun toString(): String {
-    return "UrlDownload{url=${url.get()}}"
+    return "UrlDownload{url=${url.get()}, username=${username.orNull}}"
   }
 
   override fun equals(other: Any?): Boolean {
@@ -162,11 +188,18 @@ public abstract class UrlDownload : PluginApiDownload() {
 
     other as UrlDownload
 
-    return url.get() == other.url.get()
+    return url.get() == other.url.get() &&
+      username.orNull == other.username.orNull &&
+      password.orNull == other.password.orNull &&
+      headers.orNull == other.headers.orNull
   }
 
   override fun hashCode(): Int {
-    return url.hashCode()
+    var result = url.get().hashCode()
+    result = 31 * result + (username.orNull?.hashCode() ?: 0)
+    result = 31 * result + (password.orNull?.hashCode() ?: 0)
+    result = 31 * result + (headers.orNull?.hashCode() ?: 0)
+    return result
   }
 
   internal fun urlHash(): String {
