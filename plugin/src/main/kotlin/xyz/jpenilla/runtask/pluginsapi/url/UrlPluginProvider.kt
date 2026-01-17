@@ -16,6 +16,7 @@
  */
 package xyz.jpenilla.runtask.pluginsapi.url
 
+import org.gradle.api.Action
 import xyz.jpenilla.runtask.pluginsapi.PluginApi
 import xyz.jpenilla.runtask.pluginsapi.UrlDownload
 
@@ -29,4 +30,21 @@ public interface UrlPluginProvider : PluginApi<UrlPluginProvider, UrlDownload> {
    * @param url download URL
    */
   public fun add(url: String)
+
+  /**
+   * Add a plugin download with authentication.
+   *
+   * @param url download URL
+   * @param username HTTP Basic Auth username
+   * @param password HTTP Basic Auth password
+   */
+  public fun add(url: String, username: String, password: String)
+
+  /**
+   * Add a plugin download with custom configuration.
+   *
+   * @param url download URL
+   * @param action configuration action for the download
+   */
+  public fun add(url: String, action: Action<UrlDownload>)
 }

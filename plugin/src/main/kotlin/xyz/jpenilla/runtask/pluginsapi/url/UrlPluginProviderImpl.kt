@@ -16,6 +16,7 @@
  */
 package xyz.jpenilla.runtask.pluginsapi.url
 
+import org.gradle.api.Action
 import org.gradle.api.model.ObjectFactory
 import org.gradle.kotlin.dsl.newInstance
 import xyz.jpenilla.runtask.pluginsapi.UrlDownload
@@ -30,6 +31,21 @@ public abstract class UrlPluginProviderImpl @Inject constructor(private val name
   override fun add(url: String) {
     val job = objects.newInstance(UrlDownload::class)
     job.url.set(url)
+    jobs += job
+  }
+
+  override fun add(url: String, username: String, password: String) {
+    val job = objects.newInstance(UrlDownload::class)
+    job.url.set(url)
+    job.username.set(username)
+    job.password.set(password)
+    jobs += job
+  }
+
+  override fun add(url: String, action: Action<UrlDownload>) {
+    val job = objects.newInstance(UrlDownload::class)
+    job.url.set(url)
+    action.execute(job)
     jobs += job
   }
 
