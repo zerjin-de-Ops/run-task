@@ -34,6 +34,7 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.file.Files
+import java.util.Base64
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.Duration
@@ -112,7 +113,18 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
     val version = manifest.urlProvider[urlHash] ?: PluginVersion(fileName = "$urlHash.jar", displayName = download.url.get())
     val targetFile = targetDir.resolve(version.fileName)
     val setter: (PluginVersion) -> Unit = { manifest.urlProvider[urlHash] = it }
-    val ctx = DownloadCtx(progressLoggerFactory, "url", download.url.get(), targetDir, targetFile, version, setter)
+
+    val headers = buildMap {
+      // Basic auth from username/password
+      if (download.username.isPresent && download.password.isPresent) {
+        val auth = Base64.getEncoder().encodeToString("${download.username.get()}:${download.password.get()}".toByteArray())
+        put("Authorization", "Basic $auth")
+      }
+      // Custom headers (may override Authorization if user specifies it)
+      download.headers.orNull?.let { putAll(it) }
+    }
+
+    val ctx = DownloadCtx(progressLoggerFactory, "url", download.url.get(), targetDir, targetFile, version, setter, headers = headers)
     return download(ctx)
   }
 
@@ -194,13 +206,18 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
     val tagProvider = repoProvider.computeIfAbsent(tag) { PluginVersions() }
     val version = tagProvider[asset] ?: PluginVersion(fileName = asset, displayName = "github:$owner/$repo:$tag/$asset")
 
+
     val targetDir =
       cacheDir.resolve(Constants.GITHUB_PLUGIN_DIR).resolve(owner).resolve(repo).resolve(tag)
     val targetFile = targetDir.resolve(version.fileName)
-    val downloadUrl = "https://github.com/$owner/$repo/releases/download/$tag/$asset"
+    val downloadUrl = "https://api.github.com/repos/$owner/$repo/releases/assets/$tag/$asset"
 
+    val headers = if (download.username.orNull != null && download.password.orNull != null) {
+      val auth = Base64.getEncoder().encodeToString("${download.username.get()}:${download.password.get()}".toByteArray())
+      mapOf("Authorization" to "Basic $auth")
+    } else emptyMap()
     val setter: (PluginVersion) -> Unit = { tagProvider[asset] = it }
-    val ctx = DownloadCtx(progressLoggerFactory, "github.com", downloadUrl, targetDir, targetFile, version, setter)
+    val ctx = DownloadCtx(progressLoggerFactory, "github.com", downloadUrl, targetDir, targetFile, version, setter, headers = headers)
     return download(ctx)
   }
 
@@ -236,6 +253,10 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
       connection.instanceFollowRedirects = true
       connection.setRequestProperty("Accept", "application/octet-stream")
       connection.setRequestProperty("User-Agent", Constants.USER_AGENT)
+
+      ctx.headers.forEach { (key, value) ->
+        connection.setRequestProperty(key, value)
+      }
 
       if (ctx.targetFile.isRegularFile()) {
         if (ctx.version.lastUpdateCheck > 0 && ctx.version.hash?.check(ctx.targetFile) != false) {
@@ -327,6 +348,7 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
     val version: PluginVersion,
     val setter: (PluginVersion) -> Unit,
     val requireValidJar: Boolean = true,
+    val headers: Map<String, String> = emptyMap(),
   )
 }
 
