@@ -16,6 +16,7 @@
  */
 package xyz.jpenilla.runtask.pluginsapi
 
+import org.gradle.api.Action
 import org.gradle.api.ExtensiblePolymorphicDomainObjectContainer
 import org.gradle.api.NamedDomainObjectCollectionSchema
 import org.gradle.api.NamedDomainObjectProvider
@@ -163,6 +164,20 @@ public abstract class DownloadPluginsSpec @Inject constructor(
     github.configure { add(owner, repo, tag, assetName) }
   }
 
+  /**
+   * Adds a plugin download from a GitHub release with authentication.
+   *
+   * @param owner The GitHub repository owner's name.
+   * @param repo The name of the GitHub repository.
+   * @param tag The release tag to fetch the asset from.
+   * @param assetName The name of the asset file to download from the release.
+   * @param username The username for HTTP Basic Authentication.
+   * @param password The password for HTTP Basic Authentication.
+   */
+  public fun github(owner: String, repo: String, tag: String, assetName: String, username: String, password: String) {
+    github.configure { add(owner, repo, tag, assetName, username, password) }
+  }
+
   // url extensions
 
   /**
@@ -179,6 +194,27 @@ public abstract class DownloadPluginsSpec @Inject constructor(
    */
   public fun url(urlString: String) {
     url.configure { add(urlString) }
+  }
+
+  /**
+   * Adds a plugin download from a URL with authentication.
+   *
+   * @param urlString The URL of the plugin to download.
+   * @param username HTTP Basic Authentication username.
+   * @param password HTTP Basic Authentication password.
+   */
+  public fun url(urlString: String, username: String, password: String) {
+    url.configure { add(urlString, username, password) }
+  }
+
+  /**
+   * Add a plugin download with custom configuration.
+   *
+   * @param urlString download URL
+   * @param action configuration action for the download
+   */
+  public fun url(urlString: String, action: Action<UrlDownload>) {
+    url.configure { add(urlString, action) }
   }
 
   // All zero-arg methods must be annotated or Gradle will think it's an input
