@@ -34,11 +34,11 @@ import java.io.IOException
 import java.net.HttpURLConnection
 import java.net.URI
 import java.nio.file.Files
-import java.util.Base64
 import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.time.Duration
 import java.time.Instant
+import java.util.Base64
 import java.util.Locale
 import java.util.jar.JarFile
 import kotlin.io.path.createDirectories
@@ -206,7 +206,6 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
     val tagProvider = repoProvider.computeIfAbsent(tag) { PluginVersions() }
     val version = tagProvider[asset] ?: PluginVersion(fileName = asset, displayName = "github:$owner/$repo:$tag/$asset")
 
-
     val targetDir =
       cacheDir.resolve(Constants.GITHUB_PLUGIN_DIR).resolve(owner).resolve(repo).resolve(tag)
     val targetFile = targetDir.resolve(version.fileName)
@@ -215,7 +214,9 @@ internal abstract class PluginDownloadServiceImpl : PluginDownloadService {
     val headers = if (download.username.orNull != null && download.password.orNull != null) {
       val auth = Base64.getEncoder().encodeToString("${download.username.get()}:${download.password.get()}".toByteArray())
       mapOf("Authorization" to "Basic $auth")
-    } else emptyMap()
+    } else {
+      emptyMap()
+    }
     val setter: (PluginVersion) -> Unit = { tagProvider[asset] = it }
     val ctx = DownloadCtx(progressLoggerFactory, "github.com", downloadUrl, targetDir, targetFile, version, setter, headers = headers)
     return download(ctx)

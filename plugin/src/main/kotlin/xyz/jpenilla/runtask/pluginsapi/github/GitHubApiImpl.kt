@@ -36,6 +36,17 @@ public abstract class GitHubApiImpl @Inject constructor(private val name: String
     jobs += job
   }
 
+  override fun add(owner: String, repo: String, tag: String, assetName: String, username: String, password: String) {
+    val job = objects.newInstance(GitHubApiDownload::class)
+    job.owner.set(owner)
+    job.repo.set(repo)
+    job.tag.set(tag)
+    job.assetName.set(assetName)
+    job.username.set(username)
+    job.password.set(password)
+    jobs += job
+  }
+
   override fun copyConfiguration(api: GitHubApi) {
     jobs.addAll(api.downloads)
   }

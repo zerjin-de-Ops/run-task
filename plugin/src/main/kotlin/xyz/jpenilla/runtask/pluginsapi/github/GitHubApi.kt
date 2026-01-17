@@ -32,4 +32,16 @@ public interface GitHubApi : PluginApi<GitHubApi, GitHubApiDownload> {
    * @param assetName asset file name
    */
   public fun add(owner: String, repo: String, tag: String, assetName: String)
+
+  /**
+   * Add a release artifact plugin download with authentication.
+   *
+   * @param owner repo owner
+   * @param repo repo name
+   * @param tag release tag
+   * @param assetName asset file name
+   * @param username HTTP Basic Auth username
+   * @param password HTTP Basic Auth password
+   */
+  public fun add(owner: String, repo: String, tag: String, assetName: String, username: String, password: String)
 }
